@@ -4,15 +4,19 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+
+import lime.wazza.org.kca_lime.auxillary.MenuControl;
 
 
 public class GridMenu extends ActionBarActivity {
@@ -25,12 +29,13 @@ public class GridMenu extends ActionBarActivity {
         setContentView(R.layout.activity_grid_menu);
         gv = (GridView) findViewById(R.id.gridView);
         gv.setAdapter(new AppAdapter(this));
+        gv.setOnItemClickListener(new AppAdapter(this));
     }
 
     /**
      * Create a custom adapter class for the grid
      */
-    class AppAdapter extends BaseAdapter {
+    class AppAdapter extends BaseAdapter implements AdapterView.OnItemClickListener {
 
         Context context;
         //create an arrayList of SingleGridItem objects
@@ -67,6 +72,18 @@ public class GridMenu extends ActionBarActivity {
             return i;
         }
 
+        @Override
+        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+            //detect the menu item chosen and create appropriate UI
+            Log.d("GRM", "inside the item click...");
+            View selectedView = MenuControl.getSelectionById(adapterView.getContext(), i);
+            setContentView(selectedView);
+            //issue the relevant web service call...
+
+//            Toast.makeText(view.getContext(),"The clicked ID id: "+i,Toast.LENGTH_LONG).show();
+        }
+
 
         //class to hold all images and avoid recurrent fetching
         class ViewHolder {
@@ -85,7 +102,7 @@ public class GridMenu extends ActionBarActivity {
         public View getView(int i, View view, ViewGroup viewGroup) {
 
             View row = view;
-            ViewHolder holder = null;
+            ViewHolder holder;
             //if creating view for the first time...
             if (row == null) {
                 LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(LAYOUT_INFLATER_SERVICE);
