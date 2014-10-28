@@ -1,34 +1,68 @@
 package lime.wazza.org.kca_lime.auxillary;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
+import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.TextView;
 
-import lime.wazza.org.kca_lime.R;
+import java.util.ArrayList;
 
 /**
  * Created by kelli on 10/13/14.
  */
 public class MenuControl {
-    public static View getSelectionById(Context context, int id) {
-        View v;
+
+    private static final String LOG_TAG = "MENU_CTL";
+    private static String results;
+    private static ArrayList<Unit> units;
+
+    private MoodleWS_Engine engine;
+
+    public static String getSelectionById(Context context, int id) {
+
+        //get the stored token
+        SharedPreferences p = context.getSharedPreferences("MOODLE_TOKEN_OBJ", Context.MODE_PRIVATE);
+        String token = p.getString("user_token", "No token found");
+        Log.d("MENU_CRTL", "Token Found" + token);
         switch (id) {
             case 1:
                 LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                v = inflater.inflate(R.layout.single_unit_element, null, false);
+                if (MoodleWS_Engine.isConnected(context)) {
+//                    String url1 = MoodleWS_Engine.createUrl(token, "", "", "core_course_get_courses", new HashMap<String, String>());
+                    String url1 = "http://10.0.2.2/moodle/webservice/rest/server.php?wstoken=113a3f906837164cd3ea5d94454751e3&wsfunction=core_course_get_courses";
+                    new MenuAsynTask().execute(url1);
+                    break;
+                }
 
-                TextView view = (TextView) v.findViewById(R.id.singleUnitView);
-                view.setText("This is the Units view");
-                break;
             default:
-                LayoutInflater inflater2 = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                v = inflater2.inflate(R.layout.single_unit_element, null, false);
-
-                view = (TextView) v.findViewById(R.id.singleUnitView);
-                view.setText("This is some other");
+                results = "This is the default case";
+                break;
         }
-        return v;
+        return results;
     }
+
+
+    public static class MenuAsynTask extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... strings) {
+
+            String content = MoodleWS_Engine.getStreamContent(MoodleWS_Engine.getWSMethodConnection(strings[0]));
+
+            Log.d(LOG_TAG, content.substring(0, 500));
+            return content;
+        }
+
+        @Override
+        public void onPostExecute(String content) {
+            //process return XML data for presentation
+            ContentParser cp = new ContentParser();
+            units = cp.parseDocument(content);
+
+        }
+    }
+
+
 }
 

@@ -18,7 +18,7 @@ import android.widget.Toast;
 import lime.wazza.org.kca_lime.auxillary.LoginManager;
 
 
-public class Login extends ActionBarActivity {
+public class LoginView extends ActionBarActivity {
 
     //    LinearLayout layout;
     Button login;
@@ -26,6 +26,7 @@ public class Login extends ActionBarActivity {
     TextView txtPass;
     String userName, password;
     SharedPreferences preferences;
+    private static final String LOGGER_LOGIN = "ACT_LOGIN";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +36,6 @@ public class Login extends ActionBarActivity {
         login = (Button) findViewById(R.id.btn_login);
         txtUser = (TextView) findViewById(R.id.etxt_user_name);
         txtPass = (TextView) findViewById(R.id.etxt_password);
-//            final TextView txtHttp=(TextView)findViewById(R.id.txtHttpContentView);
 
         preferences = getSharedPreferences("MOODLE_TOKEN_OBJ", Context.MODE_PRIVATE);
 
@@ -54,27 +54,26 @@ public class Login extends ActionBarActivity {
                  */
                 if (isConnected()) {
 
-                    String loginUrl = LoginManager.createLoginURL(userName, password, "http://10.0.2.2/moodle/login/token.php?");
+                    String loginUrl = LoginManager.createLoginURL
+                            (userName, password, "http://10.0.2.2/moodle/login/token.php?");
                     new LoginAsyncTask().execute(loginUrl);
 
                     //check if token has been saved...
 
-                    if (preferences.contains("moodle_token")) {
-
-                        //store the token using the cookie manager
-                        Log.d("Token Object: ", preferences.getString("moodle_token", "No token stored"));
-                        Intent intent = new Intent(Login.this, GridMenu.class);
+                    if (preferences.contains("user_token")) {
+                        Log.d("ACT_LOGIN_VIEW token received: ", preferences.getString("user_token", "Token Value not saved"));
+                        Intent intent = new Intent(LoginView.this, GridMenu.class);
                         startActivity(intent);
                     } else {
-                        Toast.makeText(view.getContext(), "Login Failed", Toast.LENGTH_LONG).show();
+                        Toast.makeText(view.getContext(),
+                                "User Not Found", Toast.LENGTH_LONG).show();
                     }
 
                 } else {
+                    //internet connection not found
                     Toast.makeText(view.getContext(),
                             "No Internet connection", Toast.LENGTH_LONG).show();
                 }
-
-
             }
         });
     }
@@ -89,6 +88,7 @@ public class Login extends ActionBarActivity {
                 (ConnectivityManager) getSystemService(Activity.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
         if (networkInfo != null && networkInfo.isConnected()) {
+            Log.d("LOGIN_CONN", "connected");
             return true;
         } else
             return false;
@@ -99,18 +99,23 @@ public class Login extends ActionBarActivity {
 
         @Override
         protected String doInBackground(String... strings) {
-            Log.d("ASYNC", strings[0]);
-            return LoginManager.authenticate(strings[0]);
+            Log.d("LOGIN_ASYNC_PARAM", strings[0]);
+            String loginResult = LoginManager.authenticate(strings[0]);
+            Log.d(LOGGER_LOGIN, "Login result= " + loginResult);
+            return loginResult;
         }
 
         @Override
         public void onPostExecute(String result) {
 
-//            store access token for later use...
+//            store received token for later use...
 
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.putString("moodle_token", result);
-            editor.commit();
+            if (!result.isEmpty()) {
+                Log.d("LOGIN_ASYNC", "Result contains: " + result);
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putString("user_token", result);
+                editor.apply();
+            }
         }
     }
 

@@ -21,9 +21,11 @@ public class LoginManager {
 
 
     public static String createLoginURL(String userName, String password, String site) {
-        return "http://10.0.2.2/moodle/login/token.php?username=sylvia_ws&password=sly*SLY12&service=nina";
-    }
 
+        String url = site + "username=" + userName + "&password=" + password + "&service=nina";
+        return url;
+//        return "http://10.0.2.2/moodle/login/token.php?username=sylvia_ws&password=sly*SLY12&service=nina";
+    }
 
     public static String authenticate(String url) {
         InputStream inputStream = null;
@@ -48,7 +50,7 @@ public class LoginManager {
                     resultString += line;
                 }
             } else {
-                resultString = "No Result Found";
+                resultString = "";
             }
             inputStream.close();
         } catch (Exception e) {

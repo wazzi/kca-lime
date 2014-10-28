@@ -1,10 +1,10 @@
 package lime.wazza.org.kca_lime;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,11 +17,13 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 import lime.wazza.org.kca_lime.auxillary.MenuControl;
+import lime.wazza.org.kca_lime.auxillary.Unit;
 
 
 public class GridMenu extends ActionBarActivity {
 
     GridView gv;
+    private static ArrayList<Unit> units;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,26 +78,22 @@ public class GridMenu extends ActionBarActivity {
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
 
             //detect the menu item chosen and create appropriate UI
-            Log.d("GRM", "inside the item click...");
-            View selectedView = MenuControl.getSelectionById(adapterView.getContext(), i);
-            setContentView(selectedView);
-            //issue the relevant web service call...
+            String output = MenuControl.getSelectionById(getApplicationContext(), i);
 
+            //parse the xml document received
+//            ContentParser cp = new ContentParser();
+//            units = cp.parseDocument(output);
+
+            //inflate the view for results..
+            LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            View resultsView = inflater.inflate(R.layout.single_unit_element, adapterView, false);
+            TextView view1 = (TextView) resultsView.findViewById(R.id.singleUnitView);
+            view1.setText(units.size());
+//            setContentView(R.layout.single_unit_element);
 //            Toast.makeText(view.getContext(),"The clicked ID id: "+i,Toast.LENGTH_LONG).show();
-        }
+            Intent intent = new Intent(getApplicationContext(), UnitsViewer.class);
 
-
-        //class to hold all images and avoid recurrent fetching
-        class ViewHolder {
-            ImageView imgView;
-            TextView textView;
-
-            public ViewHolder(View v) {
-
-                imgView = (ImageView) v.findViewById(R.id.imageView);
-                textView = (TextView) v.findViewById(R.id.textView);
-
-            }
+            startActivity(intent);
         }
 
         @Override
@@ -117,6 +115,19 @@ public class GridMenu extends ActionBarActivity {
             holder.imgView.setImageResource(current.imgID);
             holder.textView.setText(current.itemName);
             return row;
+        }
+
+        //class to hold all images and avoid recurrent fetching
+        class ViewHolder {
+            ImageView imgView;
+            TextView textView;
+
+            public ViewHolder(View v) {
+
+                imgView = (ImageView) v.findViewById(R.id.imageView);
+                textView = (TextView) v.findViewById(R.id.textView);
+
+            }
         }
     }
 
