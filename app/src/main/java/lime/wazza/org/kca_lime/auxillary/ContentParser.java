@@ -18,6 +18,11 @@ import java.util.ArrayList;
  */
 public class ContentParser {
 
+    //Loggers
+    private static final String EXP_TAG = "CPARSE_EXCEPTION";
+    private static final String ERR_TAG = "CPARSE_ERROR";
+    private static final String INFO_TAG = "CPARSE_INFO";
+
     private ArrayList<Unit> units;
     private Unit unit;
     private String keyFlag;
@@ -33,9 +38,9 @@ public class ContentParser {
             XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
             factory.setNamespaceAware(true);
             xpp = factory.newPullParser();
-            System.out.println("Created parser...");
+            Log.i(INFO_TAG, "Created parser");
         } catch (XmlPullParserException e) {
-            Log.d("PARSER_LOG", "error in creating parser");
+            Log.d(EXP_TAG, e.getMessage());
             e.printStackTrace();
         }
     }
@@ -45,7 +50,7 @@ public class ContentParser {
      */
     public ArrayList<Unit> parseDocument(String document) {
         if (document == null) {
-            System.out.println("This  parameter is null");
+            Log.e(ERR_TAG, "The string passed is null");
             System.exit(1);
         }
         try {
@@ -59,11 +64,11 @@ public class ContentParser {
                         String startTagName = xpp.getName();
 
                         //if tag name is 'single'...
-                        if (startTagName.equals("single")) {
+                        if (startTagName.equalsIgnoreCase("single")) {
                             System.out.println("Create new unit instance...");
                         }
                         //if tag name is 'key'...
-                        else if (startTagName.equals("key")) {
+                        else if (startTagName.equalsIgnoreCase("key")) {
 
                             //get the value tags for keys with attibs; id and fullname...
                             String attribName = xpp.getAttributeValue(null, "name");
@@ -73,22 +78,22 @@ public class ContentParser {
                                 keyFlag = "fullname";
                             } else if (attribName.equals("idnumber")) {
 
-                                keyFlag = "idnumber";
+                                keyFlag = "id";
                             }
                         }
                         break;
 
                     case XmlPullParser.END_TAG:
-                        if (xpp.getName().equals("single")) {
+                        if (xpp.getName().equalsIgnoreCase("single")) {
                             System.out.println("Adding unit with code: " + unit.getCode() + " and Name " + unit.getFullName());
                             units.add(unit);
                         }
                         break;
                     case XmlPullParser.TEXT:
-                        if (keyFlag.equals("fullname")) {
+                        if (keyFlag.equalsIgnoreCase("fullname")) {
                             System.out.println("fullname: " + xpp.getText());
                             unit.setFullName(xpp.getText());
-                        } else if (keyFlag.equals("idnumber")) {
+                        } else if (keyFlag.equalsIgnoreCase("id")) {
                             System.out.println("idnumber: " + xpp.getText());
                             unit.setCode(xpp.getText());
                         }
@@ -102,9 +107,10 @@ public class ContentParser {
             int count = units.size();
             System.out.println("number of units: " + count);
         } catch (XmlPullParserException e) {
+            Log.e(EXP_TAG, e.getMessage());
             e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(EXP_TAG, e.getMessage());
         }
         return units;
     }
@@ -118,12 +124,11 @@ public class ContentParser {
     public void getUnitCount(ArrayList<Unit> units) {
         if (units != null)
             for (Unit u : units) {
-                System.out.println(u.getFullName());
-                System.out.println(u.getCode());
-//            System.out.println(u.getId());
+                Log.i(INFO_TAG, u.getFullName());
+                Log.i(INFO_TAG, u.getCode());
             }
         else {
-            System.out.println("Units is null");
+            Log.e(ERR_TAG, "List(units) is null");
         }
     }
 }

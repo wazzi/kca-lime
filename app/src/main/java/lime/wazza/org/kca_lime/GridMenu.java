@@ -1,10 +1,15 @@
 package lime.wazza.org.kca_lime;
 
+import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,22 +21,31 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-import lime.wazza.org.kca_lime.auxillary.MenuControl;
+import lime.wazza.org.kca_lime.auxillary.ContentParser;
+import lime.wazza.org.kca_lime.auxillary.MoodleWS_Engine;
 import lime.wazza.org.kca_lime.auxillary.Unit;
 
 
 public class GridMenu extends ActionBarActivity {
 
     GridView gv;
-    private static ArrayList<Unit> units;
+    private static final String EXP_TAG = "MENU_CTL_EXCEPTION";
+    private static final String ERR_TAG = "MENU_CTL_ERROR";
+    private static final String INFO_TAG = "MENU_CTL_INFO";
+    //    private static String results = "<foo><single><key name=\"fullname\"><value>DTEEH</value></key><key name=\"idnumber\"><value>12313</value></key></single></foo>";
+    private String results = "";
+    private ArrayList<Unit> units;
+    private MoodleWS_Engine engine;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_grid_menu);
         gv = (GridView) findViewById(R.id.gridView);
-        gv.setAdapter(new AppAdapter(this));
-        gv.setOnItemClickListener(new AppAdapter(this));
+        AppAdapter adapter = new AppAdapter(this);
+        gv.setAdapter(adapter);
+        gv.setOnItemClickListener(adapter);
     }
 
     /**
@@ -76,24 +90,13 @@ public class GridMenu extends ActionBarActivity {
 
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+            String output = getUserOption(i);
 
-            //detect the menu item chosen and create appropriate UI
-            String output = MenuControl.getSelectionById(getApplicationContext(), i);
 
-            //parse the xml document received
-//            ContentParser cp = new ContentParser();
-//            units = cp.parseDocument(output);
 
-            //inflate the view for results..
-            LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            View resultsView = inflater.inflate(R.layout.single_unit_element, adapterView, false);
-            TextView view1 = (TextView) resultsView.findViewById(R.id.singleUnitView);
-            view1.setText(units.size());
-//            setContentView(R.layout.single_unit_element);
-//            Toast.makeText(view.getContext(),"The clicked ID id: "+i,Toast.LENGTH_LONG).show();
             Intent intent = new Intent(getApplicationContext(), UnitsViewer.class);
-
             startActivity(intent);
+
         }
 
         @Override
@@ -141,5 +144,83 @@ public class GridMenu extends ActionBarActivity {
         }
     }
 
+    public String getUserOption(int id) {
 
+        //get the stored token
+        SharedPreferences p = this.getApplicationContext().getSharedPreferences("MOODLE_TOKEN_OBJ", Context.MODE_PRIVATE);
+        String token = p.getString("user_token", "No token found");
+        Log.i("MENU_CRTL", "Token in preferences file: " + token);
+        switch (id) {
+
+            case 2:
+                if (MoodleWS_Engine.isConnected(this.getApplicationContext())) {
+//                    String url1 = MoodleWS_Engine.createUrl(token, "", "", "core_course_get_courses", new HashMap<String, String>());
+                    String url1 = "http://10.0.2.2/moodle/webservice/rest/server.php?wstoken=113a3f906837164cd3ea5d94454751e3&wsfunction=core_course_get_courses";
+
+                    //start new background task to fetch xml document from Moodle webservice and process courses available
+                    MenuAsynTask bgTask = new MenuAsynTask();
+                    bgTask.createDialog(GridMenu.this);
+                    bgTask.execute(url1);
+                }
+                break;
+
+            default:
+                results = "This is the default case";
+                break;
+        }
+        return results;
+    }
+
+    /**
+     * Class will carry out background tasks:
+     * 1. Connect to Moodle web service
+     * 2. Execute the get_courses function
+     * 3. Parse the XML document returned,create a list of courses available and pass list for
+     * display on the UI.
+     */
+    public class MenuAsynTask extends AsyncTask<String, Void, String> {
+
+        private ProgressDialog dialog;
+
+        public void createDialog(Activity activity) {
+            dialog = new ProgressDialog(activity);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            dialog.setMessage("Fetching content...");
+            dialog.show();
+            Log.i(INFO_TAG, "Dialog showing...");
+        }
+
+        @Override
+        protected String doInBackground(String... strings) {
+
+            String content = MoodleWS_Engine.getStreamContent(MoodleWS_Engine.getWSMethodConnection(strings[0]));
+            Log.i(INFO_TAG, content);
+            return content;
+        }
+
+        @Override
+        public void onPostExecute(String s) {
+
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
+            if (s.equals(null)) {
+                Log.e(ERR_TAG, "The returned string is null");
+            } else {
+                Log.i(INFO_TAG, "The returned string OK...parsing to list");
+                //process return XML data for presentation
+                ContentParser cp = new ContentParser();
+                units = cp.parseDocument(s);
+                Log.i(INFO_TAG, String.valueOf(s.length()));
+                Log.i(INFO_TAG, String.valueOf(units.size()));
+            }
+
+        }
+
+
+    }
 }

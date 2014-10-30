@@ -30,7 +30,8 @@ import java.util.Set;
  */
 public class MoodleWS_Engine {
 
-    private final static String EXCEPTION = "MWS_EXCEPTION";
+    private final static String EXP_TAG = "MWS_EXCEPTION";
+    private final static String INFO_TAG = "MWS_INFO";
     private static final String BASE_URL = "http://10.0.2.2/moodle/webservice/rest/server.php";
     private static String delimiter = "?";
     private final String LOGIN_URL = "http://localhost/moodle/login/token.php";
@@ -51,6 +52,7 @@ public class MoodleWS_Engine {
                 (ConnectivityManager) context.getSystemService(Activity.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
         if (networkInfo != null && networkInfo.isConnected()) {
+            Log.i(INFO_TAG, "Device connected to internet");
             return true;
         } else
             return false;
@@ -119,13 +121,13 @@ public class MoodleWS_Engine {
             HttpResponse httpResponse = client.execute(get);
             inputStream = httpResponse.getEntity().getContent();
         } catch (ClientProtocolException cpre) {
-            Log.d(MoodleWS_Engine.EXCEPTION, cpre.getMessage());
+            Log.d(MoodleWS_Engine.EXP_TAG, cpre.getMessage());
             cpre.printStackTrace();
         } catch (IOException io) {
-            Log.d(MoodleWS_Engine.EXCEPTION, io.getMessage());
+            Log.d(MoodleWS_Engine.EXP_TAG, io.getMessage());
             io.printStackTrace();
         }
-//        Log.d("MOODLE_WS","Inputstream: "+inputStream)
+        Log.i(INFO_TAG, "Moodle Webservice connection is OK");
         return inputStream;
     }
 
@@ -133,7 +135,7 @@ public class MoodleWS_Engine {
 
         String results = "";
         String liner;
-        BufferedReader reader = null;
+        BufferedReader reader;
         try {
 
             reader = new BufferedReader(new InputStreamReader(in));
@@ -143,17 +145,18 @@ public class MoodleWS_Engine {
 
             }
         } catch (IOException ioe) {
-            Log.d(MoodleWS_Engine.EXCEPTION, ioe.getMessage());
+            Log.d(MoodleWS_Engine.EXP_TAG, ioe.getMessage());
         } finally {
             if (in != null) {
                 try {
                     in.close();
                 } catch (IOException e) {
-                    Log.d(MoodleWS_Engine.EXCEPTION, "Error closing stream");
+                    Log.d(MoodleWS_Engine.EXP_TAG, e.getMessage());
                 }
             }
         }
-//        Log.d("MOODLE_WSENG",results);
+        Log.i(INFO_TAG, String.valueOf(results.length()));
+        Log.i(INFO_TAG, "Reading stream content OK");
         return results;
     }
 }
