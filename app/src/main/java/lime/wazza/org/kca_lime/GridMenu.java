@@ -35,7 +35,6 @@ public class GridMenu extends ActionBarActivity {
     //    private static String results = "<foo><single><key name=\"fullname\"><value>DTEEH</value></key><key name=\"idnumber\"><value>12313</value></key></single></foo>";
     private String results = "";
     private ArrayList<Unit> units;
-    private MoodleWS_Engine engine;
 
 
     @Override
@@ -91,9 +90,6 @@ public class GridMenu extends ActionBarActivity {
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
             String output = getUserOption(i);
-
-
-
             Intent intent = new Intent(getApplicationContext(), UnitsViewer.class);
             startActivity(intent);
 
@@ -208,7 +204,7 @@ public class GridMenu extends ActionBarActivity {
             if (dialog.isShowing()) {
                 dialog.dismiss();
             }
-            if (s.equals(null)) {
+            if (s.length() < 1) {
                 Log.e(ERR_TAG, "The returned string is null");
             } else {
                 Log.i(INFO_TAG, "The returned string OK...parsing to list");
